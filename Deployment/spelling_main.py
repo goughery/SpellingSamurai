@@ -5,6 +5,7 @@ import logging
 import json
 from data_handler import add_increment_userDB, add_wordsDB, get_wordsDB, check_listDB, check_userSessionsDB, get_paidDB, set_paidDB, set_gradeDB, get_GradewordsDB, delete_wordsDB, delete_listDB
 from getSpelled import getSpelled
+import logging, traceback
 
 _wordList = ["polymorphous", "mouse"]
 spB = "<speak>"
@@ -747,5 +748,11 @@ def lambda_handler(event, context):
             
             
     except Exception as error:
-        print(error)
+        #print(error)
+        logger = logging.getLogger()
+        logger.setLevel(logging.ERROR)
+        errorText = traceback.format_exc()
+        logger.error(errorText)
+        #logger.error(traceback.print_exc())
+        #logger.error(error)
         return handle_session_end_request(error = 1)
