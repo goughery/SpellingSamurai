@@ -55,10 +55,7 @@ def check_userSessionsDB(session):
     #find out how many lists the user has
     userID = session['user']['userId']
     add_increment_userDB(session, 0)
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     getUserIDKeySQL = """SELECT SessionCount
                          FROM spelling.Users WHERE UserID = '%s'""" %(userID)
     with conn.cursor() as cur:
@@ -77,10 +74,7 @@ def check_listDB(session):
     #find out how many lists the user has
     userID = session['user']['userId']
     add_increment_userDB(session, 0)
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     
     getUserIDKeySQL = """SELECT UserIDKey
                          FROM spelling.Users WHERE UserID = '%s'""" %(userID)
@@ -175,10 +169,7 @@ def add_wordsDB(session, wordList, listNum):
     #add_increment_userDB(session, 0)
     numMap = {"one":1, "two":2, "three":3, "four":4, "five":5, "six":6, "seven":7, "eight":8, "nine":9, "ten":10}
     listNum = numMap[listNum]
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     
     userID = session['user']['userId'] 
     getUserIDKeySQL = """SELECT UserIDKey
@@ -207,10 +198,7 @@ def get_wordsDB(session, listNum):
     numMap = {"one":1, "two":2, "three":3, "four":4, "five":5, "six":6, "seven":7, "eight":8, "nine":9, "ten":10}
     listNum = numMap[listNum]
     
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     
     userID = session['user']['userId'] 
     getUserIDKeySQL = """SELECT UserIDKey 
@@ -235,10 +223,7 @@ def get_paidDB(session):
     #find out if the user is paid
     #returns 1 or 0
     userID = session['user']['userId']
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     getPaidSQL = """SELECT Paid
                          FROM spelling.Users WHERE UserID = '%s'""" %(userID)
     with conn.cursor() as cur:
@@ -255,10 +240,7 @@ def get_paidDB(session):
 
 def set_paidDB(session, paid):
     userID = session['user']['userId']
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     setPaidSQL = """UPDATE spelling.Users SET Paid = %s WHERE UserID = '%s'""" %(paid, userID)
     with conn.cursor() as cur:
         cur.execute(setPaidSQL)
@@ -272,10 +254,7 @@ def set_gradeDB(session, grade):
     numMap = {"one":1, "two":2, "three":3, "four":4, "five":5, "six":6, "seven":7, "eight":8, "nine":9, "ten":10, "eleven": 11, "twelve":12}
     gradeNum = numMap[grade]
     userID = session['user']['userId']
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     setGradeSQL = """UPDATE spelling.Users SET Grade = %s WHERE UserID = '%s'""" %(gradeNum, userID)
     with conn.cursor() as cur:
         cur.execute(setGradeSQL)
@@ -287,10 +266,7 @@ def set_gradeDB(session, grade):
     
 def get_GradewordsDB(session):
     userID = session['user']['userId']
-    try:
-        conn = pymysql.connect('jeffdb.c8gaccabupfm.us-east-1.rds.amazonaws.com', user='lambdauser', passwd='dRt4#98Uknd', db='spelling', connect_timeout=5, cursorclass=pymysql.cursors.DictCursor)
-    except:
-        return "Connection Fail"
+    conn = makeConnection()
     getGradeSQL = """SELECT Grade FROM spelling.Users WHERE UserID = '%s'""" %(userID)
     getWordsSQL = """SELECT Word
                     FROM spelling.GradeLists

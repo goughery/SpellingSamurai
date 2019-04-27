@@ -61,9 +61,9 @@ def continue_dialog(state, intentname = "", slotname="", slotvalue=""):
     
     
     
-# --------------getters and setters------------------------------
+#-------match regex-----------
 def getMatchRegX(correctWord):
-    word = correctWord.replace(" " "")
+    word = correctWord.replace(" ", "")
     
     lettersCombos = ['[zc]', '[cz]', '[mn]', '[nm]', '[bd]', '[db]', '[td]', '[dt]', '[bp]', '[pb]']
     
