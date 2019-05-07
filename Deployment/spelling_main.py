@@ -131,17 +131,12 @@ def error_response(where):
 
 def welcome_text(sessionCount, listCount):
     if sessionCount == 1 and len(listCount) == 0:
-        speech_output = """Welcome to the Spelling Samurai skill.
-        I can help you become a better speller <break/> and prepare for school tests by spelling words in real-time <break/> using your own spelling lists. 
-        Let's start by adding your very first list of words. This time, <break/> let's just add five words. <break/> Grab your spelling list, and when you're ready and I'm listening, please say: <break/> add words to <break/> list one. <break/>
-        Afterwords, you can delete these words by saying <break/> delete words. <break/> If you need help, just say I need help."""
+        speech_output = """Welcome to Spelling Samurai.
+        Let's practice spelling. <break/> Please list some words. <break/> If you need help, just say: <break/>I need help."""
     elif sessionCount > 1 and len(listCount) == 0:
-        speech_output = """Welcome back to the Spelling Samurai skill.
-        I can help you become a better speller <break/> and prepare for school tests by spelling words in real-time <break/> using your own spelling lists. 
-        Remember, we need to set up your first list. This time, <break/> let's just add five words. <break/> Grab your spelling list, and when you're ready and I'm listening, please say: <break/> add words to <break/> list one.
-        If you need help, just say I need help."""
+        speech_output = """Welcome back to Spelling Samurai. Please list some words. <break/> If you need help, just say: <break/>I need help."""
     else:
-        speech_output = """Welcome back to the Spelling Samurai skill. Please say start quiz <break/>, <break/> add words, <break/> delete list, <break/> or delete words. Remember <break/> if you need help, say <break/>I need help."""
+        speech_output = """Welcome back to Spelling Samurai skill. You can say <break/> start quiz <break/>, <break/> add words, <break/> delete list, <break/> or delete words. If you need help, say <break/>I need help."""
         
         
     speech_output = spB + speech_output + spE
@@ -152,12 +147,13 @@ def get_help_response():
     card_title = "Help"
     should_end_session = False
     
-    speech_output = """Help is here. I'm going to explain how this skill works so that you can better use it.
-    This skill is a real-time spelling quiz which tests you on how to spell words as if somebody were helping you <break/>, perhaps using flash cards.
-    First, you must create a spelling words list by saying <break/> add words. Then, say your words in one go <break/> one after another in succession. Once we have a list, you can say <break/> quiz me. 
-    You can also have multiple lists. If you want to add words to a different list you would say <break/> add words to list two. Then, to be tested on that list, you would say <break/> quiz me on list two.
+    speech_output = """
+    This skill is a real-time spelling quiz.
+    First, create a word list by saying <break/> add words. Then, say each word <break/> while I listen. Once we have a list, you can say <break/> quiz me.
+    I'll say the word, and you spell it after the chime.
+    You can also have multiple lists. If you want to add words to a different list, say <break/> add words to list two. Then, to be tested on that list, say <break/> quiz me on list two.
     At the end of each test, I tell you your score.<break/> 
-    At the end of each word prompt is a small delay so that you are able to think before spelling. Please start spelling after the chime.<break/>
+    
     <break/> You can also delete words from lists by saying <break/> delete words. <break/> Or you can delete or clear entire lists buy saying <break/> delete list. <break/>"""
     reprompt_text = "So please tell me what you'd like to do: add words <break/>, delete words, <break/> delete list, <break/> or<break/> start quiz."
     
@@ -339,83 +335,83 @@ def delete_list(session, intent_request={'dialogState':'In_Progress'}):
             card_title, speech_output, reprompt_text, should_end_session))
 
 
+def done_adding_words(session, intent_request):
+    return continue_dialog("COMPLETED")
+
 
 def add_words(session, intent_request={'dialogState':'In_Progress'}):
     add_increment_userDB(session, 0)
     speech_output = ""
     dialog_state = intent_request['dialogState']
-    if dialog_state != "COMPLETED":
-        return continue_dialog(dialog_state)
+    listChoice = intent_request['intent']['slots']['ListNumber']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['name']
+    listsUsed = check_listDB(session)
+    if len(listsUsed) == 0 and listChoice.lower() != "one":
+        listChoice = "one"
+        speech_output = "Cannot add to that list yet. List one created. "
     else:
         listChoice = intent_request['intent']['slots']['ListNumber']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['name']
-        listsUsed = check_listDB(session)
-        if len(listsUsed) == 0 and listChoice.lower() != "one":
-            listChoice = "one"
-            speech_output = "Cannot add to that list yet. List one created. "
+
+    wordsSpoken = intent_request['intent']['slots']['Words']['value']
+    wordList = []
+    wordString = ""
+    for word in wordsSpoken.split(" "):
+        wordList.append(word)
+        wordString += word + ", "
+    wordString = wordString[:-2]
+    #add the words to the database
+    if get_paidDB(session) == 1:
+        #if user paid
+        add_wordsDB(session, wordList, listNum = listChoice)
+        speech_output += "Words added to list %s. " %(listChoice)
+        speech_output += "Those words are: %s. " %(wordString)
+        reprompt_text = "Now you can say <break/> add more words, <break/> delete words, delete list, <break/> or say start quiz."
+        speech_output += reprompt_text
+    else:
+        #if user not paid, check nu of words in list
+
+        if len(get_wordsDB(session, listChoice)) >= maxWordsNumber:
+            #if the words in the db equals the max, cut them off right away
+            speech_output += "You already have %s words in this list. <break/> <break/>"%(maxWordsWord)
+            reprompt_text = "To support the developer, please consider purchasing the full version of this skill, <break/> in which there is no limit on word count. If you'd like more details, <break/> please say <break/> purchase unlimited words. <break/>"
+            reprompt_text += "Otherwise <break/> say <break/> delete words, delete list, <break/> or start quiz."
+            speech_output += reprompt_text
         else:
-            listChoice = intent_request['intent']['slots']['ListNumber']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['name']
-            
-        wordsSpoken = intent_request['intent']['slots']['Words']['value']
-        wordList = []
-        wordString = ""
-        for word in wordsSpoken.split(" "):
-            wordList.append(word)
-            wordString += word + ", "
-        wordString = wordString[:-2]
-        #add the words to the database
-        if get_paidDB(session) == 1:
-            #if user paid
+            #if the number of words in the db is less than the max, allow them to add just to the max
+            numToAdd = maxWordsNumber-len(get_wordsDB(session, listChoice))
+            if numToAdd < 0:
+                numToAdd = 0
+            #if words to add is shorter than original wordlist
+            if len(wordList) > len(wordList[:numToAdd]):
+                cutOff = 1
+            else:
+                cutOff = 0
+            wordList = wordList[:numToAdd]
             add_wordsDB(session, wordList, listNum = listChoice)
+            wordString = ""
+            if len(wordList) > 0:
+                wordString = ""
+                for word in wordList:
+                    wordString += word + ", "
+                wordString = wordString[:-2]
+
             speech_output += "Words added to list %s. " %(listChoice)
             speech_output += "Those words are: %s. " %(wordString)
-            reprompt_text = "Now you can say <break/> add more words, <break/> delete words, delete list, <break/> or say start quiz."
-            speech_output += reprompt_text
-        else: 
-            #if user not paid, check nu of words in list
-            
-            if len(get_wordsDB(session, listChoice)) >= maxWordsNumber:
-                #if the words in the db equals the max, cut them off right away
-                speech_output += "You already have %s words in this list. <break/> <break/>"%(maxWordsWord)
-                reprompt_text = "To support the developer, please consider purchasing the full version of this skill, <break/> in which there is no limit on word count. If you'd like more details, <break/> please say <break/> purchase unlimited words. <break/>"
+            if cutOff != 1:
+                reprompt_text = "If you'd like to add more words, just say add more words, or you can delete words, delete list, <break/> otherwise <break/> say start quiz."
+                speech_output += reprompt_text
+                reprompt_text = speech_output
+            elif cutOff == 1:
+                reprompt_text = "The free version of this skill only supports adding a total of %s words to a list <break/>. To support the developer, please consider purchasing the full version of the skill, in which there is no limit. <break/> If you'd like more details before you buy <break/> please say <break/> learn more about unlimited words. <break/>"%(maxWordsWord)
                 reprompt_text += "Otherwise <break/> say <break/> delete words, delete list, <break/> or start quiz."
                 speech_output += reprompt_text
-            else:
-                #if the number of words in the db is less than the max, allow them to add just to the max
-                numToAdd = maxWordsNumber-len(get_wordsDB(session, listChoice))
-                if numToAdd < 0:
-                    numToAdd = 0
-                #if words to add is shorter than original wordlist
-                if len(wordList) > len(wordList[:numToAdd]):
-                    cutOff = 1
-                else:
-                    cutOff = 0
-                wordList = wordList[:numToAdd]
-                add_wordsDB(session, wordList, listNum = listChoice)
-                wordString = ""
-                if len(wordList) > 0:
-                    wordString = ""
-                    for word in wordList:
-                        wordString += word + ", "
-                    wordString = wordString[:-2]
-                
-                speech_output += "Words added to list %s. " %(listChoice)
-                speech_output += "Those words are: %s. " %(wordString)
-                if cutOff != 1:
-                    reprompt_text = "If you'd like to add more words, just say add more words, or you can delete words, delete list, <break/> otherwise <break/> say start quiz."
-                    speech_output += reprompt_text
-                    reprompt_text = speech_output
-                elif cutOff == 1:
-                    reprompt_text = "The free version of this skill only supports adding a total of %s words to a list <break/>. To support the developer, please consider purchasing the full version of the skill, in which there is no limit. <break/> If you'd like more details before you buy <break/> please say <break/> learn more about unlimited words. <break/>"%(maxWordsWord)
-                    reprompt_text += "Otherwise <break/> say <break/> delete words, delete list, <break/> or start quiz."
-                    speech_output += reprompt_text
-                
-    
-        speech_output  = spB + speech_output + spE
-        reprompt_text = spB + reprompt_text + spE
-        card_title = "Add Words"
-        should_end_session = False
-        return build_response({}, build_speechlet_response(
-            card_title, speech_output, reprompt_text, should_end_session))
+
+
+    speech_output  = spB + speech_output + spE
+    reprompt_text = spB + reprompt_text + spE
+    card_title = "Add Words"
+    should_end_session = False
+    return build_response({}, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
 
 
 
